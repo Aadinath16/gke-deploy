@@ -1,1 +1,1 @@
-# gke-deploy
+# gke-deploy using helm charts
