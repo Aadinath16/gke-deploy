@@ -34,7 +34,13 @@ jobs:
 
       - name: Configure Docker for Artifact Registry
         run: |
-          gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev --quiet
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Set default variables
+        id: default-variable
+        run: |
+            echo ${GITHUB_RUN_NUMBER}
+            echo ${GITHUB_RUN_ID}
 
       - name: Set environment variables
         id: set-env
@@ -51,9 +57,9 @@ jobs:
         run: |
           docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }} .
 
-      - name: Push Docker image
-        run: |
-          docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }}
+      # - name: Push Docker image
+      #   run: |
+      #     docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }}
 
   deploy:
     needs: build
@@ -73,10 +79,13 @@ jobs:
       #   run: |
       #     gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} --zone ${{ env.CLUSTER_LOCATION }} --project ${{ env.PROJECT_ID }}
 
-      - name: Deploy to GKE
-        run: |
-          echo "Deploying ${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image_tag }} to ${{ needs.build.outputs.environment }}"
+      # - name: Deploy to GKE
+      #   run: |
+      #     echo "Deploying ${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image_tag }} to ${{ needs.build.outputs.environment }}"
 
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image_tag }}
 
 
 
