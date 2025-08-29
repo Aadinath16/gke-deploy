@@ -58,6 +58,12 @@ jobs:
         run: |
           docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }} .
 
+      - name: Verify Artifact Registry Login
+        run: |
+          echo $HOME
+          ls -la ~/.docker
+          cat ~/.docker/config.json | grep ${{ env.GAR_LOCATION }}-docker.pkg.dev || echo "Not logged in"
+
       - name: Push Docker image
         run: |
           docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }}
