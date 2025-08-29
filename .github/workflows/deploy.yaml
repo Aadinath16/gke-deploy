@@ -15,8 +15,11 @@ env:
   CLUSTER_LOCATION: us-central1-c    # GKE cluster zone/region
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.set-env.outputs.image_tag }}
+      environment: ${{ steps.set-env.outputs.environment }}
 
     steps:
       - name: Checkout code
@@ -37,26 +40,111 @@ jobs:
         id: set-env
         run: |
           if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
-            echo "ENV=prod" >> $GITHUB_ENV
-            echo "IMAGE_TAG=prod-${GITHUB_SHA::7}" >> $GITHUB_ENV
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "image_tag=1.0.0-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
           else
-            echo "ENV=dev" >> $GITHUB_ENV
-            echo "IMAGE_TAG=dev-${GITHUB_SHA::7}" >> $GITHUB_ENV
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "image_tag=1.0.0-dev-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
           fi
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+          docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }} .
 
-    #   - name: Push Docker image
-    #     run: |
-    #       docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }}
 
-    #   - name: Get GKE credentials
-    #     run: |
-    #       gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} --zone ${{ env.CLUSTER_LOCATION }} --project ${{ env.PROJECT_ID }}
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.build.outputs.environment }}   # This is what enforces manual approval if set in repo settings
 
-    #   - name: Deploy to GKE
-    #     run: |
-    #       # NOTE: Replace this with Helm or kubectl apply when manifests are ready
-    #       echo "Deploying ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} to $ENV"
+    steps:
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      # - name: Get GKE credentials
+      #   run: |
+      #     gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} --zone ${{ env.CLUSTER_LOCATION }} --project ${{ env.PROJECT_ID }}
+
+      - name: Deploy to GKE
+        run: |
+          echo "Deploying ${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image_tag }} to ${{ needs.build.outputs.environment }}"
+
+
+
+
+# name: Build & Deploy to GKE
+
+# on:
+#   push:
+#     branches:
+#       - dev
+#       - main
+
+# env:
+#   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+#   GAR_LOCATION: us-central1          # Artifact Registry region
+#   REPO_NAME: python-app-dev
+#   IMAGE_NAME: flask-app
+#   CLUSTER_NAME: gke-cluster
+#   CLUSTER_LOCATION: us-central1-c    # GKE cluster zone/region
+
+# jobs:
+#   build-and-deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Set up gcloud
+#         uses: google-github-actions/setup-gcloud@v2
+#         with:
+#           project_id: ${{ env.PROJECT_ID }}
+#           service_account_key: ${{ secrets.GCP_SA_KEY }}
+#           export_default_credentials: true
+
+#       - name: Configure Docker for Artifact Registry
+#         run: |
+#           gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev --quiet
+
+#       - name: Set default variables
+#         id: default-variable
+#         run: |
+#             echo ${GITHUB_RUN_NUMBER}
+#             echo ${GITHUB_RUN_ID}
+
+#       - name: Set environment variables
+#         id: set-env
+#         run: |
+#           if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+#             echo "ENV=prod" >> $GITHUB_ENV
+#             echo "IMAGE_TAG=1.0.0-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+#           else
+#             echo "ENV=dev" >> $GITHUB_ENV
+#             echo "IMAGE_TAG=1.0.0-dev-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+#           fi
+
+#       - name: Build Docker image
+#         run: |
+#           docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+
+#       - name: Push Docker image
+#         run: |
+#           docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+#     #   - name: Get GKE credentials
+#     #     run: |
+#     #       gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} --zone ${{ env.CLUSTER_LOCATION }} --project ${{ env.PROJECT_ID }}
+
+#     #   - name: Deploy to GKE
+#     #     run: |
+#     #       # NOTE: Replace this with Helm or kubectl apply when manifests are ready
+#     #       echo "Deploying ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} to $ENV"
