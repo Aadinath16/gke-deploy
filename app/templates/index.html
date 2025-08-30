@@ -2,35 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Flask Alert POC</title>
+    <title>Flask Error Generator</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-        button { padding: 12px 20px; margin: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
-        .ok { background-color: #4CAF50; color: white; }
-        .client-error { background-color: #f0ad4e; color: white; }
-        .server-error { background-color: #d9534f; color: white; }
-        #response { margin-top: 20px; font-weight: bold; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            text-align: center;
+        }
+        button {
+            padding: 12px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .success { background-color: #4CAF50; color: white; }
+        .warning { background-color: #FF9800; color: white; }
+        .error   { background-color: #F44336; color: white; }
     </style>
 </head>
 <body>
-    <h1>Flask Alert POC</h1>
-    <p>Click a button to generate logs in GKE</p>
+    <h1>Flask Error Generator</h1>
+    <p>Click a button to trigger logs & responses:</p>
+    <button class="success" onclick="trigger('/success')">Trigger 200 (OK)</button>
+    <button class="warning" onclick="trigger('/error/400')">Trigger 400 (Bad Request)</button>
+    <button class="error" onclick="trigger('/error/500')">Trigger 500 (Server Error)</button>
 
-    <button class="ok" onclick="callApi('/ok')">Generate 200 OK</button>
-    <button class="client-error" onclick="callApi('/client-error')">Generate 400 Error</button>
-    <button class="server-error" onclick="callApi('/server-error')">Generate 500 Error</button>
-
-    <div id="response"></div>
+    <pre id="responseBox"></pre>
 
     <script>
-        async function callApi(endpoint) {
+        async function trigger(endpoint) {
             try {
-                const response = await fetch(endpoint);
-                const data = await response.json();
-                document.getElementById("response").innerText = 
-                    `Response ${response.status}: ${JSON.stringify(data)}`;
-            } catch (error) {
-                document.getElementById("response").innerText = "Error calling API";
+                const res = await fetch(endpoint);
+                const data = await res.json();
+                document.getElementById("responseBox").innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                document.getElementById("responseBox").innerText = "Error: " + err;
             }
         }
     </script>

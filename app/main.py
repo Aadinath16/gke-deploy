@@ -1,58 +1,99 @@
-from flask import Flask, jsonify, abort, render_template
+from flask import Flask, render_template, jsonify
 import logging
-import sys
 from datetime import datetime
 
 app = Flask(__name__)
 
-# JSON formatter for structured logging
-class JsonFormatter(logging.Formatter):
-    def format(self, record):
-        log_record = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "severity": record.levelname,
-            "message": record.getMessage(),
-            "logger": record.name,
-        }
-        return str(log_record).replace("'", '"')
-
 # Configure logging
-handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(JsonFormatter())
 logger = logging.getLogger("app")
 logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    '{"timestamp": "%(asctime)s", "severity": "%(levelname)s", "message": "%(message)s", "logger": "%(name)s"}'
+)
+handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+
 @app.route("/")
-def home():
+def index():
     return render_template("index.html")
+
 
 @app.route("/success")
 def success():
-    logger.info("Request handled successfully")
-    return jsonify({"message": "Success"}), 200
+    logger.info("Success endpoint hit (200)")
+    return jsonify({"status": "success", "code": 200}), 200
+
 
 @app.route("/error/400")
-def error_400():
-    abort(400)   # No logging here, handler will log
+def bad_request():
+    logger.warning("Client error simulated (400)")
+    return jsonify({"status": "fail", "code": 400, "error": "Bad Request"}), 400
+
 
 @app.route("/error/500")
-def error_500():
-    abort(500)   # No logging here, handler will log
+def server_error():
+    logger.error("Server error simulated (500)")
+    return jsonify({"status": "fail", "code": 500, "error": "Internal Server Error"}), 500
 
-# Error Handlers (only place where 4xx/5xx are logged)
-@app.errorhandler(400)
-def bad_request(error):
-    logger.warning("Client error occurred (400)")
-    return jsonify({"error": "Bad Request"}), 400
 
-@app.errorhandler(500)
-def internal_error(error):
-    logger.error("Server error occurred (500)")
-    return jsonify({"error": "Internal Server Error"}), 500
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+# from flask import Flask, jsonify, abort, render_template
+# import logging
+# import sys
+# from datetime import datetime
+
+# app = Flask(__name__)
+
+# # JSON formatter for structured logging
+# class JsonFormatter(logging.Formatter):
+#     def format(self, record):
+#         log_record = {
+#             "timestamp": datetime.utcnow().isoformat() + "Z",
+#             "severity": record.levelname,
+#             "message": record.getMessage(),
+#             "logger": record.name,
+#         }
+#         return str(log_record).replace("'", '"')
+
+# # Configure logging
+# handler = logging.StreamHandler(sys.stdout)
+# handler.setFormatter(JsonFormatter())
+# logger = logging.getLogger("app")
+# logger.setLevel(logging.INFO)
+# logger.addHandler(handler)
+
+# @app.route("/")
+# def home():
+#     return render_template("index.html")
+
+# @app.route("/success")
+# def success():
+#     logger.info("Request handled successfully")
+#     return jsonify({"message": "Success"}), 200
+
+# @app.route("/error/400")
+# def error_400():
+#     abort(400)   # No logging here, handler will log
+
+# @app.route("/error/500")
+# def error_500():
+#     abort(500)   # No logging here, handler will log
+
+# # Error Handlers (only place where 4xx/5xx are logged)
+# @app.errorhandler(400)
+# def bad_request(error):
+#     logger.warning("Client error occurred (400)")
+#     return jsonify({"error": "Bad Request"}), 400
+
+# @app.errorhandler(500)
+# def internal_error(error):
+#     logger.error("Server error occurred (500)")
+#     return jsonify({"error": "Internal Server Error"}), 500
+
+# if __name__ == "__main__":
+#     app.run(host="0.0.0.0", port=8080)
 
 
 
