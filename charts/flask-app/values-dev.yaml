@@ -14,3 +14,8 @@ env:
     value: "development"
   - name: DEBUG
     value: "true"
+
+rbac:
+  enabled: true
+  githubUser: "github-action-dev@<PROJECT_ID>.iam.gserviceaccount.com"
+  roleName: "secret-reader"
