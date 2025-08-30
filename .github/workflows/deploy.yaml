@@ -88,16 +88,16 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
+          install_components: gke-gcloud-auth-plugin
 
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      - name: Install GKE Auth Plugin
-        run: |
-          gcloud components install gke-gcloud-auth-plugin -q
-          gcloud config set auth/use-gke-plugin true
+      # - name: Install GKE Auth Plugin
+      #   run: |
+      #     gcloud components install gke-gcloud-auth-plugin -q
 
       - name: Get GKE credentials
         run: |
