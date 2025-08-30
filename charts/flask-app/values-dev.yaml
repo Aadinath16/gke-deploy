@@ -1,0 +1,16 @@
+replicaCount: 1
+
+image:
+  repository: us-central1-docker.pkg.dev/PROJECT_ID/python-app-dev/flask-app
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 80
+
+env:
+  - name: APP_ENV
+    value: "development"
+  - name: DEBUG
+    value: "true"
