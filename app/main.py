@@ -34,3 +34,20 @@ def register_routes(app):
         else:
             logger.info(f"Unhandled {code} response")
         return jsonify({"status": code}), code
+
+
+    @app.route("/external-test")
+    def external_test():
+        """Call an external API and log errors if it fails."""
+        try:
+            # Replace with your actual endpoint that may return 500
+            response = requests.get("http://example.com/api/trigger-500")
+            response.raise_for_status()  # Raises for 4xx/5xx
+            logger.info("External API call succeeded")
+            return jsonify({"message": "External call succeeded"}), 200
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"External HTTP Error: {e.response.status_code} - {e.response.reason}")
+            return jsonify({"error": "External service failed"}), 500
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"External Connection Error: {e}")
+            return jsonify({"error": "Connection failed"}), 502
