@@ -1,9 +1,13 @@
-from flask import jsonify
-
+from flask import jsonify, render_template
 import logging
+
 logger = logging.getLogger(__name__)
 
 def register_routes(app):
+    @app.route("/")
+    def home():
+        return render_template("index.html")
+
     @app.route("/ok")
     def ok():
         logger.info("200 OK response generated")

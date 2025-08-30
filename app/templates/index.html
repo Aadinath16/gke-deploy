@@ -1,10 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Flask GCP Logging</title>
+    <meta charset="UTF-8">
+    <title>Flask Alert POC</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        button { padding: 12px 20px; margin: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .ok { background-color: #4CAF50; color: white; }
+        .client-error { background-color: #f0ad4e; color: white; }
+        .server-error { background-color: #d9534f; color: white; }
+        #response { margin-top: 20px; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <h1>Welcome to Flask App with GCP Logging!</h1>
-    <p>Try <a href="/warning">Warning</a> or <a href="/error">Error</a> routes.</p>
+    <h1>Flask Alert POC</h1>
+    <p>Click a button to generate logs in GKE</p>
+
+    <button class="ok" onclick="callApi('/ok')">Generate 200 OK</button>
+    <button class="client-error" onclick="callApi('/client-error')">Generate 400 Error</button>
+    <button class="server-error" onclick="callApi('/server-error')">Generate 500 Error</button>
+
+    <div id="response"></div>
+
+    <script>
+        async function callApi(endpoint) {
+            try {
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                document.getElementById("response").innerText = 
+                    `Response ${response.status}: ${JSON.stringify(data)}`;
+            } catch (error) {
+                document.getElementById("response").innerText = "Error calling API";
+            }
+        }
+    </script>
 </body>
 </html>
