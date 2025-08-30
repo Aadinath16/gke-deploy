@@ -1,33 +1,54 @@
 from flask import Flask, request
 import logging
 import sys
+import json
+from datetime import datetime
+
+class GCPJsonFormatter(logging.Formatter):
+    """Format logs as JSON with severity for GCP Log Explorer"""
+    def format(self, record):
+        log_obj = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "severity": record.levelname,
+            "message": record.getMessage(),
+            "logger": record.name,
+        }
+        return json.dumps(log_obj)
 
 def create_app():
     app = Flask(__name__)
 
-    # Configure logging to stdout (so GKE captures logs)
-    logging.basicConfig(
-        stream=sys.stdout,
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s"
-    )
+    # Configure JSON logging
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(GCPJsonFormatter())
+    root = logging.getLogger()
+    root.handlers = [handler]
+    root.setLevel(logging.INFO)
 
     logger = logging.getLogger(__name__)
 
     @app.after_request
     def after_request(response):
-        """Log every response with proper severity based on status code."""
+        """Log every response with correct severity and structured fields"""
         status = response.status_code
-        msg = f"{request.method} {request.path} {status}"
+        log_obj = {
+            "httpRequest": {
+                "requestMethod": request.method,
+                "requestUrl": request.path,
+                "status": status,
+                "userAgent": request.headers.get("User-Agent"),
+                "remoteIp": request.remote_addr,
+            }
+        }
 
         if 200 <= status < 300:
-            logger.info(msg)
+            logger.info(f"Request handled successfully", extra=log_obj)
         elif 400 <= status < 500:
-            logger.warning(msg)
+            logger.warning(f"Client error occurred", extra=log_obj)
         elif 500 <= status < 600:
-            logger.error(msg)
+            logger.error(f"Server error occurred", extra=log_obj)
         else:
-            logger.info(msg)
+            logger.info(f"Other response", extra=log_obj)
 
         return response
 
