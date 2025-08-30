@@ -1,19 +1,18 @@
-# Use official Python image as base
+# Use official lightweight Python image
 FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install
+# Install dependencies in one layer
 COPY app/requirements.txt .
-
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app source code
-COPY app/ .
+# Copy application code
+COPY app/ ./app
 
-# Expose port
+# Expose the port Flask/Gunicorn will run on
 EXPOSE 8080
 
-# Command to run the app
-CMD ["python", "app.py"]
+# Run Gunicorn (production-ready server)
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "app:create_app()"]
