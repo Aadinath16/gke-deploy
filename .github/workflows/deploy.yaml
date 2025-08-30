@@ -63,8 +63,8 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ needs.build.outputs.environment }}     
+    # environment:
+    #   name: ${{ needs.build.outputs.environment }}     
     needs: build
     steps:
       - name: Checkout
