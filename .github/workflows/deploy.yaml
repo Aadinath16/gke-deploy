@@ -101,7 +101,7 @@ jobs:
           helm upgrade --install ${{ env.IMAGE_NAME }}-${{ needs.build.outputs.environment }} ./charts/${{ env.IMAGE_NAME }} \
             -n ${{ needs.build.outputs.environment }} --create-namespace \
             -f ./charts/${{ env.IMAGE_NAME }}/values-${{ needs.build.outputs.environment }}.yaml \
-            --set image.repository=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}-${{ needs.build.outputs.environment }}/${{ env.IMAGE_NAME }} \
+            --set image.repository=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}-${{ env.IMAGE_NAME }} \
             --set image.tag=${{ steps.set-env.outputs.image_tag }}
 
 
