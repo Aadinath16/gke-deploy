@@ -15,5 +15,5 @@ COPY app/ ./app
 EXPOSE 8080
 
 # Run Gunicorn (production-ready server)
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "--workers", "3", "--timeout", "120", "app:create_app()"]
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "--workers", "3", "--timeout", "120", "app.main:app"]
 
