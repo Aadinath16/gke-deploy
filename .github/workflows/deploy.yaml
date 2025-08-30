@@ -94,6 +94,11 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
+      - name: Install GKE Auth Plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin -q
+          gcloud config set auth/use-gke-plugin true
+
       - name: Get GKE credentials
         run: |
           gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }}-${{ needs.build.outputs.environment }} \
