@@ -31,12 +31,12 @@ jobs:
           terraform_version: 1.8.5
 
       - name: Terraform Init
-        run: terraform -chdir=infra/environments/${{ github.ref_name }} init \
+        run: terraform -chdir=infra/env/${{ github.ref_name }} init \
           -backend-config="bucket=tf-gcp-test-123-${{ github.ref_name }}" \
           -backend-config="prefix=env/${{ github.ref_name }}"
 
       - name: Terraform Plan
-        run: terraform -chdir=infra/environments/${{ github.ref_name }} plan -out=tfplan
+        run: terraform -chdir=infra/env/${{ github.ref_name }} plan -out=tfplan
 
       - name: Upload Plan Artifact
         uses: actions/upload-artifact@v4
