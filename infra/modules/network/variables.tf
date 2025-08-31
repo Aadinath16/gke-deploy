@@ -3,7 +3,7 @@ variable "environment" {
 }
 
 variable "subnet_cidr" {
-  type = "string"
+  type = string
 }
 
 variable "region" {
