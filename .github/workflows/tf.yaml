@@ -1,72 +1,75 @@
-name: Terraform CI/CD
+name: Terraform Infra Pipeline
 
 on:
   push:
-    paths:
-      - 'infra/**'  # Trigger only for changes in infra folder
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+  id-token: write  # Required for Workload Identity Federation
 
 jobs:
   terraform-plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
-    env:
-      ENV_NAME: ${{ github.ref_name }}       # Branch name as environment
-      TF_BUCKET: tf-gcp-test-123-${{ github.ref_name }} # Bucket per environment
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.6.0
 
       - name: Authenticate to GCP using Workload Identity
         uses: google-github-actions/auth@v1
         with:
-            workload_identity_provider: "projects/PROJECT_ID/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
-            service_account: "github-action-dev@gcp-test-123-dev.iam.gserviceaccount.com"
+          workload_identity_provider: "projects/516177572638/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
+          service_account: "github-actions-sa@gcp-test-123-dev.iam.gserviceaccount.com"
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
 
       - name: Terraform Init
-        run: |
-          terraform -chdir=infra/environments/${{ env.ENV_NAME }} init \
-            -backend-config="bucket=${{ env.TF_BUCKET }}" \
-            -backend-config="prefix=env/${{ env.ENV_NAME }}"
+        run: terraform -chdir=infra/environments/${{ github.ref_name }} init \
+          -backend-config="bucket=abc-${{ github.ref_name }}" \
+          -backend-config="prefix=env/${{ github.ref_name }}"
 
       - name: Terraform Plan
-        run: terraform -chdir=infra/environments/${{ env.ENV_NAME }} plan -out=tfplan
+        run: terraform -chdir=infra/environments/${{ github.ref_name }} plan -out=tfplan
 
-      - name: Save Plan Artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: tfplan
-          path: infra/environments/${{ env.ENV_NAME }}/tfplan
+          path: infra/environments/${{ github.ref_name }}/tfplan
 
 #   terraform-apply:
-#     name: Terraform Deploy
-#     needs: terraform-plan
+#     name: Terraform Apply
 #     runs-on: ubuntu-latest
-#     env:
-#       ENV_NAME: ${{ github.ref_name }}
-#       TF_BUCKET: tf-gcp-test-123-${{ github.ref_name }} # Bucket per environment
+#     needs: terraform-plan
 #     environment:
-#       name: ${{ github.ref_name }}  # GitHub environment with approval
+#       name: ${{ github.ref_name }}   # Requires approval in GitHub Environments
 #     steps:
-#       - name: Checkout repo
+#       - name: Checkout code
 #         uses: actions/checkout@v4
+
+#       - name: Authenticate to GCP using Workload Identity
+#         uses: google-github-actions/auth@v1
+#         with:
+#           workload_identity_provider: "projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-provider"
+#           service_account: "github-actions-sa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com"
 
 #       - name: Setup Terraform
 #         uses: hashicorp/setup-terraform@v3
 #         with:
-#           terraform_version: 1.6.0
+#           terraform_version: 1.8.5
 
 #       - name: Download Plan Artifact
-#         uses: actions/download-artifact@v3
+#         uses: actions/download-artifact@v4
 #         with:
 #           name: tfplan
-#           path: infra/environments/${{ env.ENV_NAME }}
+#           path: infra/environments/${{ github.ref_name }}
 
 #       - name: Terraform Apply
-#         run: terraform -chdir=infra/environments/${{ env.ENV_NAME }} apply -auto-approve tfplan
+#         run: terraform -chdir=infra/environments/${{ github.ref_name }} apply tfplan
