@@ -31,7 +31,8 @@ jobs:
           terraform_version: 1.8.5
 
       - name: Terraform Init
-        run: terraform -chdir=infra/env/${{ github.ref_name }} init \
+        run: |
+            terraform -chdir=infra/env/${{ github.ref_name }} init \
                 -backend-config="bucket=tf-gcp-test-123-${{ github.ref_name }}" \
                 -backend-config="prefix=env/${{ github.ref_name }}"
 
