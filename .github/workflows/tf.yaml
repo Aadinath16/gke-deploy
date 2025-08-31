@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
-          path: infra/environments/${{ github.ref_name }}/tfplan
+          path: infra/env/${{ github.ref_name }}/tfplan
 
 #   terraform-apply:
 #     name: Terraform Apply
