@@ -32,8 +32,8 @@ jobs:
 
       - name: Terraform Init
         run: terraform -chdir=infra/env/${{ github.ref_name }} init \
-          -backend-config="bucket=tf-gcp-test-123-${{ github.ref_name }}" \
-          -backend-config="prefix=env/${{ github.ref_name }}"
+                -backend-config="bucket=tf-gcp-test-123-${{ github.ref_name }}" \
+                -backend-config="prefix=env/${{ github.ref_name }}"
 
       - name: Terraform Plan
         run: terraform -chdir=infra/env/${{ github.ref_name }} plan -out=tfplan
